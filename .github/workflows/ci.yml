@@ -58,7 +58,7 @@ jobs:
               nb = json.load(f)
           cells = nb.get('cells', [])
           required_phases = ['Inception', 'Construction', 'Operation']
-          all_md = '\n'.join([c.get('source','') for c in cells])
+          all_md = '\n'.join([''.join(c.get('source', [])) for c in cells])
           missing = [p for p in required_phases if p not in all_md]
           if missing:
               print(f'⚠️  Warning: Phase headers not found: {missing}')
