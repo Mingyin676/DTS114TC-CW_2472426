@@ -144,20 +144,28 @@ This project includes a GitHub Actions workflow at `.github/workflows/ci.yml`.
 | `pull_request` to `main` | On every PR |
 | `workflow_dispatch` | Manual trigger from Actions tab |
 
-### What It Checks
+### Pipeline Jobs
 
-The workflow validates the **source code** (notebook + utils) — it does **not** run the generated Flask app or Docker build, since `CW/artifacts/` is git-ignored and not uploaded to GitHub.
+The workflow runs 4 independent jobs in parallel:
 
-| Check | Description |
-|-------|-------------|
-| Notebook JSON validity | Ensures `CW/Generator.ipynb` is valid JSON with code + markdown cells |
-| Import smoke test | Verifies all `CW.utils` imports resolve without errors |
-| Python linting | Runs flake8 on `CW/utils.py` (warnings are non-blocking) |
-| Security scan | Greps for hardcoded API keys, secrets, or tokens in source files |
-| Markdown lint | Checks `README.md` formatting via markdownlint-cli (non-blocking) |
-| Cell structure | Verifies Inception, Construction, Operation phase headers are present |
-| Notebook completeness | Checks which code cells have been executed and have outputs |
-| Conda environment | Validates `ai_in_se_cw.yml` can be exported successfully |
+```
+Push / PR / Manual
+       │
+       ├── Code Style           flake8 + markdown lint
+       ├── Security Scan        grep hardcoded secrets
+       ├── Notebook Structure   JSON validity + phase headers + execution
+       └── Environment & Imports  conda setup + utils import test
+```
+
+| Job | Checks | Dependencies |
+|-----|--------|-------------|
+| **Code Style** | • flake8 on `CW/utils.py` (non-blocking)<br>• markdownlint on `README.md` (non-blocking) | System Python + npx only |
+| **Security Scan** | • Grep for hardcoded API keys, secrets, tokens in source files | No Python needed |
+| **Notebook Structure** | • Valid JSON with code + markdown cells<br>• Inception, Construction, Operation phase headers present<br>• Code cells executed and have outputs | System Python only |
+| **Environment & Imports** | • `CW.utils` imports resolve without errors<br>• Conda environment exportable | Full conda environment |
+
+
+## License
 
 
 ## License
