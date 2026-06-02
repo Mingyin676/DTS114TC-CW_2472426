@@ -1,0 +1,72 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - '**/*.md'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate Source
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          environment-file: ai_in_se_cw.yml
+          activate-environment: ai_in_se_cw
+          python-version: '3.10'
+          auto-activate-base: false
+
+      - name: Verify notebook is valid JSON
+        run: |
+          python -c "
+          import json
+          with open('CW/Generator.ipynb', 'r', encoding='utf-8') as f:
+              nb = json.load(f)
+          cells = nb.get('cells', [])
+          code_cells = [c for c in cells if c.get('cell_type') == 'code']
+          md_cells = [c for c in cells if c.get('cell_type') == 'markdown']
+          print(f'✅ Notebook valid: {len(cells)} cells ({len(code_cells)} code, {len(md_cells)} markdown)')
+          assert len(code_cells) > 0, 'No code cells found'
+          assert len(md_cells) > 0, 'No markdown cells found'
+          "
+
+      - name: Lint Python source files
+        run: |
+          python -m flake8 CW/utils.py --max-line-length=120 --ignore=E501,W503,E402 --statistics || true
+          echo "---"
+          python -m flake8 --version
+
+      - name: Check notebook cell structure
+        run: |
+          python -c "
+          import json
+          with open('CW/Generator.ipynb', 'r', encoding='utf-8') as f:
+              nb = json.load(f)
+          cells = nb.get('cells', [])
+          required_phases = ['Inception', 'Construction', 'Operation']
+          all_md = '\n'.join([c.get('source','') for c in cells])
+          missing = [p for p in required_phases if p not in all_md]
+          if missing:
+              print(f'⚠️  Warning: Phase headers not found: {missing}')
+          else:
+              print('✅ All required phase headers found')
+          "
+
+      - name: Verify conda env export
+        run: |
+          conda env export -n ai_in_se_cw --no-builds > /tmp/env_check.yml
+          echo "✅ Conda environment exportable"

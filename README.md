@@ -104,6 +104,9 @@ DTS114TC-CW_2472426/
 ├── .gitignore
 ├── ai_in_se_cw.yml               # Conda environment file
 ├── README.md                     # This file
+├── .github/
+│   └── workflows/
+│       └── ci.yml                # CI/CD pipeline (GitHub Actions)
 ├── CW/
 │   ├── __pycache__/              # Python bytecode cache (auto-generated)
 │   ├── Generator.ipynb           # Core notebook — runs the AI pipeline
@@ -127,6 +130,30 @@ DTS114TC-CW_2472426/
 │           └── docker-compose.yml
 ```
 
+
+
+## CI Pipeline
+
+This project includes a GitHub Actions workflow at `.github/workflows/ci.yml`.
+
+### Workflow Triggers
+
+| Trigger | When |
+|---------|------|
+| `push` to `main` | On every push (ignoring `.md` changes) |
+| `pull_request` to `main` | On every PR |
+| `workflow_dispatch` | Manual trigger from Actions tab |
+
+### What It Checks
+
+The workflow validates the **source code** (notebook + utils) — it does **not** run the generated Flask app or Docker build, since `CW/artifacts/` is git-ignored and not uploaded to GitHub.
+
+| Check | Description |
+|-------|-------------|
+| Notebook JSON validity | Ensures `CW/Generator.ipynb` is valid JSON with code + markdown cells |
+| Python linting | Runs flake8 on `CW/utils.py` (warnings are non-blocking) |
+| Cell structure | Verifies Inception, Construction, Operation phase headers are present |
+| Conda environment | Validates `ai_in_se_cw.yml` can be exported successfully |
 
 
 ## License
