@@ -151,8 +151,12 @@ The workflow validates the **source code** (notebook + utils) — it does **not*
 | Check | Description |
 |-------|-------------|
 | Notebook JSON validity | Ensures `CW/Generator.ipynb` is valid JSON with code + markdown cells |
+| Import smoke test | Verifies all `CW.utils` imports resolve without errors |
 | Python linting | Runs flake8 on `CW/utils.py` (warnings are non-blocking) |
+| Security scan | Greps for hardcoded API keys, secrets, or tokens in source files |
+| Markdown lint | Checks `README.md` formatting via markdownlint-cli (non-blocking) |
 | Cell structure | Verifies Inception, Construction, Operation phase headers are present |
+| Notebook completeness | Checks which code cells have been executed and have outputs |
 | Conda environment | Validates `ai_in_se_cw.yml` can be exported successfully |
 
 

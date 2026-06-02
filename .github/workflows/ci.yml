@@ -44,11 +44,36 @@ jobs:
           assert len(md_cells) > 0, 'No markdown cells found'
           "
 
+      - name: Import smoke test
+        run: |
+          python -c "
+          from CW.utils import get_completion, load_environment, render_plantuml_diagram, setup_llm_client, clean_llm_output
+          print('✅ All CW.utils imports resolved successfully')
+          "
+
       - name: Lint Python source files
         run: |
           python -m flake8 CW/utils.py --max-line-length=120 --ignore=E501,W503,E402 --statistics || true
-          echo "---"
-          python -m flake8 --version
+
+      - name: Security scan — hardcoded secrets
+        run: |
+          echo "Scanning for potential secrets in source files..."
+          # Exclude .env, __pycache__, and artifacts (generated)
+          SECRET_PATTERNS='(api_key\s*=|API_KEY\s*=|api\.key\s*=|secret\s*=|password\s*=|token\s*=|Authorization\s*:)'
+          FOUND=$(grep -rInE "$SECRET_PATTERNS" \
+            --include='*.py' --include='*.sh' --include='*.yml' --include='*.yaml' --include='*.json' \
+            --exclude-dir='__pycache__' --exclude-dir='artifacts' --exclude='.env' \
+            . 2>/dev/null || true)
+          if [ -n "$FOUND" ]; then
+            echo "⚠️  Possible secrets found (review each):"
+            echo "$FOUND" | head -20
+          else
+            echo "✅ No obvious secrets detected in source files"
+          fi
+
+      - name: Markdown lint
+        run: |
+          npx --yes markdownlint-cli@0.44.0 README.md --disable MD013 MD033 MD041 || echo "⚠️  Markdown issues found (non-blocking)"
 
       - name: Check notebook cell structure
         run: |
@@ -64,6 +89,26 @@ jobs:
               print(f'⚠️  Warning: Phase headers not found: {missing}')
           else:
               print('✅ All required phase headers found')
+          "
+
+      - name: Check notebook completeness (executed cells)
+        run: |
+          python -c "
+          import json
+          with open('CW/Generator.ipynb', 'r', encoding='utf-8') as f:
+              nb = json.load(f)
+          cells = nb.get('cells', [])
+          code_cells = [c for c in cells if c.get('cell_type') == 'code']
+          executed = [c for c in code_cells if c.get('execution_count') is not None]
+          empty = [c for c in code_cells if c.get('execution_count') is None and c.get('source') and ''.join(c.get('source', [])).strip()]
+          print(f'✅ {len(code_cells)} code cells total, {len(executed)} executed')
+          if empty:
+              print(f'⚠️  {len(empty)} code cells have source but no output (may not have been run):')
+              for i, c in enumerate(empty):
+                  first_line = ''.join(c.get('source', [])).strip().split('\n')[0][:60]
+                  print(f'    Cell #{cells.index(c)}: {first_line}...')
+          else:
+              print('✅ All code cells have been executed')
           "
 
       - name: Verify conda env export
