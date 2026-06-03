@@ -1,6 +1,7 @@
 # AI-Driven Educational Quiz Platform Generator
 
-This system transforms user-specified subjects and knowledge points into a fully functional online quiz platform. Given a topic (e.g., "Python Basics: variables, loops, functions"), the system automatically generates a Flask API with question bank management, quiz generation via AI, auto-scoring, and grade statistics — along with an interactive frontend featuring quiz pages, result analysis, wrong-answer review, and an AI-generated knowledge mind map image. As users input different topics and generate questions, all questions accumulate in the question bank, creating a comprehensive mixed-topic quiz — the more topics you add, the richer and more diverse the quiz becomes.
+This system transforms user-specified subjects and knowledge points into a fully functional online quiz platform. Given a topic (e.g., "Python Basics: variables, loops, functions"), the system automatically generates a Flask API with quiz generation via AI, auto-scoring, and an interactive frontend featuring quiz pages and result .
+
 
 > **Scope:** The core quiz flow (topic input → AI generation → quiz taking → auto-scoring) is fully implemented. The "Review Wrong" and "View Stats" sections on the frontend are UI placeholders.
 
@@ -165,7 +166,6 @@ Push / PR / Manual
 | **Environment & Imports** | • `CW.utils` imports resolve without errors<br>• Conda environment exportable | Full conda environment |
 
 
-## License
 
 
 ## License
